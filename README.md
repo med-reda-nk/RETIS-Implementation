@@ -1,5 +1,5 @@
 # RETIS Project - PERFECT Karalic 1992 Implementation
-# ==========================================
+# ====================================
 
 ## Project Summary
 RETIS (Regression Tree with Embedded Linear Models) is a **PERFECT implementation** of the Karalic 1992 algorithm, built entirely from scratch using only NumPy. The project demonstrates advanced ML concepts with **exact algorithmic fidelity** to the original paper, validated on real UCI datasets.
