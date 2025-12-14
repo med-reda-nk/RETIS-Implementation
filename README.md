@@ -179,5 +179,3 @@ RETIS (Regression Tree with Embedded Linear Models) is a **PERFECT implementatio
 - ✅ sklearn-compatible interface
 - ✅ Comprehensive test coverage
 - ✅ Performance benchmarking
-- ✅ Technical documentation in French</content>
-<parameter name="filePath">c:\Users\medre\OneDrive\Bureau\ensam\IA\4e annee\S7\KDD\RETIS\PROJECT_FILES_OVERVIEW.md
