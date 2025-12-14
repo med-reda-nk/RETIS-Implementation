@@ -171,6 +171,4 @@ To implement exact RETIS (Karalic 1992), the following changes would be needed:
 3. **Simplify prediction** - only leaf nodes need models
 4. **Reduce computation** - don't fit O(n) models, only during split search
 
-**Current Implementation**: Enhanced variant with additional modeling capabilities  
-**Recommendation**: Rename to "Linear Model Tree" or document as "RETIS-inspired" rather than exact RETIS.</content>
-<parameter name="filePath">c:\Users\medre\OneDrive\Bureau\ensam\IA\4e annee\S7\KDD\RETIS\RETIS_ALGORITHM_ANALYSIS.md
+
