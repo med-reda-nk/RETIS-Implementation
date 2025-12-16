@@ -1,299 +1,293 @@
 ================================================================================
-RETIS PROJECT - FINAL STATUS (PERFECT KARALIC 1992 MATCH)
+🧪 COMPREHENSIVE RETIS TEST SUITE
 ================================================================================
 
-PROJECT COMPLETION: 100% ✅
-PERFECT ALGORITHMIC FIDELITY: ✅ Matches Karalic 1992 RETIS exactly
-PERFORMANCE VALIDATION: ✅ Excellent results on real datasets
-All components rebuilt to use ONLY numpy, no sklearn dependencies.
+🔍 Test 1: Basic RETIS Functionality
+   ✅ Model training: PASSED
+   ✅ Predictions: PASSED
+   📊 MSE: 2.8370, Leaves: 5, Depth: 3
+
+🔍 Test 2: RETIS Optimizer
+
+============================================================
+CONFIGURATION COMPARISON
+============================================================
+
+🔍 Configuration 1: {'max_depth': 5, 'min_samples_split': 20}
+  CV MSE: 0.9572 ± 0.7363
+
+🔍 Configuration 2: {'max_depth': 8, 'min_samples_split': 10}
+  CV MSE: 0.9572 ± 0.7363
+   ✅ Configuration comparison: PASSED
+   📊 Configurations tested: 2
+
+🔍 Test 3: Regression Evaluation
+
+======================================================================
+🎯 RETIS REGRESSION MODEL EVALUATION
+======================================================================
+
+📊 Training Set Performance:
+   MSE:           2.3961
+   RMSE:          1.5479
+   MAE:           1.2065
+   R²:            0.8869
+   Explained Var: 0.8869
+   MAPE:          140.8726
+   Rel. RMSE:     0.4288
+   Rel. MAE:      0.3342
+
+📈 Test Set Performance:
+   MSE:           5.6985
+   RMSE:          2.3872
+   MAE:           1.8539
+   R²:            0.7409
+   Explained Var: 0.7425
+   MAPE:          527.8498
+   Rel. RMSE:     0.5787
+   Rel. MAE:      0.4494
+
+⚠️  Overfitting Analysis:
+   R² difference (train - test): 0.1460
+   → Significant overfitting detected
+
+🔄 Performing 3-fold cross-validation...
+   MSE scores: [-5.55536144 -5.56723962 -8.11528652]
+.4f .4f
+
+🏁 Model Comparison:
+           Model  Test_MSE  Test_RMSE  Test_MAE  Test_R2  Test_MAPE
+           RETIS    5.6985     2.3872    1.8539   0.7409   527.8498
+  Mean Predictor   23.0240     4.7983    3.9077  -0.0470   526.6655
+Median Predictor   24.2955     4.9290    3.9615  -0.1049   344.2060
+   ✅ Regression evaluation: PASSED
+   ✅ Cross-validation: PASSED
+   ✅ Baseline comparison: PASSED
+
+🔍 Test 4: Classification Evaluation
+
+======================================================================
+🎯 RETIS CLASSIFICATION MODEL EVALUATION
+======================================================================
+
+📊 Training Set Performance:
+   Accuracy:      0.9343
+   Precision (macro): 0.9465
+   Precision (micro): 0.9343
+   Recall (macro):    0.8998
+   Recall (micro):    0.9343
+   F1 (macro):        0.9226
+   F1 (micro):        0.9343
+   AUC (macro):       0.9841
+   AUC (micro):       0.9841
+
+📈 Test Set Performance:
+   Accuracy:      0.7667
+   Precision (macro): 0.7043
+   Precision (micro): 0.7667
+   Recall (macro):    0.6883
+   Recall (micro):    0.7667
+   F1 (macro):        0.6962
+   F1 (micro):        0.7667
+   AUC (macro):       0.8901
+   AUC (micro):       0.8901
+
+⚠️  Overfitting Analysis:
+   Accuracy difference (train - test): 0.1676
+   → Significant overfitting detected
+
+🔄 Performing 3-fold cross-validation...
+   Accuracy scores: [0.68376068 0.7008547  0.75862069]
+
+🏁 Model Comparison:
+        Model  Accuracy  Precision  Recall     F1    AUC
+        RETIS    0.7667     0.7043  0.6883 0.6962 0.8901
+       Random    0.3733     0.3828  0.3870 0.3849 0.0000
+Most Frequent    0.5600     0.1867  0.3333 0.2393 0.0000
+   ✅ Classification evaluation: PASSED
+   ✅ Cross-validation: PASSED
+   ✅ Baseline comparison: PASSED
+
+🔍 Test 5: sklearn Compatibility
+   ✅ get_params/set_params: PASSED
+   ✅ Simple grid search compatibility: PASSED
+   📊 Best CV score: 0.9968
+
+🔍 Test 6: Performance Benchmarks
+   ✅ Performance benchmarks: PASSED
+   📊 Performance scaling:
+
+🔍 Test 7: Edge Cases
+   ✅ Single feature: PASSED
+   ✅ Small dataset: PASSED
+   ✅ Constant target: PASSED
+   📊 Edge cases: 3/3 passed
 
 ================================================================================
-PERFORMANCE RESULTS (Real Datasets)
+📊 TEST SUITE SUMMARY
+================================================================================
+✅ Basic Retis: PASSED
+.4f
+      - n_leaves: 5
+      - depth: 3
+✅ Retis Optimizer: PASSED
+      - n_configs_tested: 2
+✅ Regression Evaluation: PASSED
+.4f
+.4f
+      - n_baselines: 2
+✅ Classification Evaluation: PASSED
+.4f
+.4f
+      - n_baselines: 2
+✅ Sklearn Compatibility: PASSED
+.4f
+      - n_params_tested: 4
+✅ Performance Benchmarks: PASSED
+✅ Edge Cases: PASSED
+      - passed: 3
+      - total: 3
+
+ Overall Score: 7/7 tests passed
+🏆 ALL TESTS PASSED! RETIS is fully functional.
 ================================================================================
 
-🎯 CLASSIFICATION (Adult Income - 32,561 samples):
-   • Test Accuracy: 81.47% (Excellent!)
-   • Train Accuracy: 81.56% (Minimal overfitting: 0.1%)
-   • Beats Most Frequent baseline: 75.43% → +6.04%
-   • Competitive with Logistic Regression: 81.82% (-0.35% gap)
-   • Random Forest comparison: 83.39% (-1.92% gap)
-
-🎯 REGRESSION (California Housing - 20,433 samples):
-   • Test R²: 0.2192 (Strong performance)
-   • Train R²: 0.8014 (Good learning, some overfitting)
-   • Beats Linear Regression: 0.1022 → +11.7% improvement
-   • Random Forest comparison: 0.5811 (reasonable gap)
-   • Beats Mean baseline: -0.0384 → +25.76%
-
-⚡ COMPUTATIONAL PERFORMANCE:
-   • Training: 0.08-7.39s (100-20K samples)
-   • Prediction: <0.01s (all sizes)
-   • Memory: Lightweight tree structure
-   • Scalability: Handles 32K+ samples efficiently
-
 ================================================================================
-CORE IMPLEMENTATION (From Scratch)
+ RETIS INTEGRATION DEMO
 ================================================================================
 
-1. retis.py (PERFECT Karalic 1992 RETIS Implementation)
-   [+] LinearRegressionCustom - Custom linear regression using np.linalg.lstsq
-   [+] BaseEstimator - Custom base class for parameter management
-   [+] RegressorMixin - Mixin for regression estimators
-   [+] RETISNode - Tree node structure
-   [+] RETIS - Main tree implementation (EXACT Karalic 1992 algorithm)
-
-   Key Features (Now Perfect Match):
-   - ✅ Models fitted ONLY in LEAF nodes (original RETIS requirement)
-   - ✅ Internal nodes contain ONLY split information (no models)
-   - ✅ Binary tree with recursive splitting
-   - ✅ MSE-based splitting using linear model evaluation
-   - ✅ Pruning with Bayesian m-estimate
-   - ✅ Computational complexity: O(log n) model fits (optimal)
-
-   Key Methods:
-   - fit() - Build tree using exact RETIS algorithm
-   - predict() - Traverse to leaf, use leaf linear model
-   - _fit_linear_model() - Custom least-squares (used only in leaves)
-   - _find_best_split() - Evaluate splits using temporary model fitting
-   - get_params() / set_params() - sklearn compatibility
-   - score() - Custom R² calculation
-   - get_n_leaves() / get_depth() - Tree statistics
-
-   Algorithmic Fidelity: ✅ PERFECT MATCH with Karalic (1992)
-   Status: ✓ FULLY CUSTOM (no sklearn imports)
-
-2. custom_metrics.py (All 19 Metrics from Scratch)
-   [+] CustomMetrics class with 19 static methods
-   
-   Regression Metrics (9):
-   - mse, rmse, mae, r2_score, median_absolute_error
-   - mean_absolute_percentage_error, explained_variance_score
-   - relative_rmse, relative_mae
-   
-   Classification Metrics (10):
-   - accuracy_score, precision_score (binary/macro/micro)
-   - recall_score, f1_score, confusion_matrix
-   - classification_report, roc_auc_binary
-   - roc_curve, precision_recall_curve
-   
-   Utilities:
-   - custom_cross_val_score() - K-fold cross-validation
-   - train_test_split_custom() - Data splitting
-   
-   Status: ✓ FULLY CUSTOM (no sklearn imports)
-
-3. retis_classification_custom.py (Custom Classification)
-   [+] RETISClassifierCustom - One-vs-rest classification with RETIS
-   [+] RETISClassificationEvaluatorCustom - Comprehensive evaluation
-   
-   Key Features:
-   - Supports binary and multi-class classification
-   - Probability normalization
-   - Custom metric calculation
-   - Baseline comparison
-   
-   Status: ✓ FULLY CUSTOM (imports only retis, custom_metrics, numpy)
-
-4. retis_regression_custom.py (Custom Regression Evaluation)
-   [+] RETISRegressionEvaluatorCustom - Full regression pipeline
-   [+] Utility functions for synthetic data generation
-   
-   Key Features:
-   - Comprehensive metrics calculation
-   - K-fold cross-validation
-   - Residuals analysis
-   - Baseline comparison
-   
-   Status: ✓ FULLY CUSTOM (imports only retis, custom_metrics, numpy)
-
-5. retis_optimizer.py (Custom Optimization Toolkit)
-   [+] StandardScalerCustom - Custom feature scaling
-   [+] RETISOptimizer - Hyperparameter optimization
-   
-   Key Methods:
-   - preprocess_data() - Custom scaling
-   - grid_search_optimization() - Manual grid search (no GridSearchCV)
-   - manual_optimization_guide() - Data-aware recommendations
-   - compare_configurations() - Compare different hyperparameters
-   - evaluate_model() - Comprehensive evaluation
-   
-   Status: ✓ FULLY CUSTOM (no sklearn imports)
-
-6. retis_test_all_custom.py (Comprehensive Test Suite)
-   [+] Complete validation suite with real datasets
-   [+] 6 comprehensive test methods
-
-   Tests:
-   1. ✅ Basic RETIS functionality (synthetic data)
-   2. ✅ Regression evaluation (California Housing - 20K samples)
-   3. ✅ Classification evaluation (Adult Income - 32K samples)
-   4. ✅ Custom metrics validation (19 metrics from scratch)
-   5. ✅ Edge cases (single feature, small dataset, constant target)
-   6. ✅ Performance benchmarks (scaling tests)
-
-   Result: 6/6 PASSING (100% success rate)
-   Real Dataset Performance:
-   - Classification: 81.47% accuracy (Adult Income)
-   - Regression: R² = 0.2192 (California Housing)
-   Status: ✓ FULLY CUSTOM (imports only retis, custom_metrics, numpy)
-
+ REGRESSION DEMO
+----------------------------------------
 ================================================================================
-ALGORITHMIC IMPROVEMENTS (Perfect Karalic 1992 Match)
+🔬 COMPREHENSIVE RETIS REGRESSION EVALUATION
 ================================================================================
 
-BEFORE (Enhanced Variant):
-- Models fitted in ALL nodes (internal + leaves)
-- O(n) computational complexity
-- Extra models never used for prediction
-- Not true to original RETIS algorithm
+============================================================
+CONFIGURATION COMPARISON
+============================================================
+[+] Baseline (mean) MSE on training data: 21.9968
 
-AFTER (Perfect Match):
-- ✅ Models fitted ONLY in LEAF nodes
-- ✅ Internal nodes contain split info only
-- ✅ O(log n) computational complexity
-- ✅ Exact reproduction of Karalic (1992) RETIS
-- ✅ Optimal algorithmic fidelity
+🔍 Configuration 1: {'max_depth': 4, 'min_samples_split': 30, 'min_samples_leaf': 15, 'm_estimate': 1.0, 'min_mse_reduction': 0.01, 'significance_level': 0.1, 'max_threshold_candidates': 50, 'account_for_split_cost': True}
+  CV MSE: 4.1335 ± 0.2147
 
+🔍 Configuration 2: {'max_depth': 5, 'min_samples_split': 25, 'min_samples_leaf': 12, 'm_estimate': 2.0, 'min_mse_reduction': 0.01, 'significance_level': 0.1, 'max_threshold_candidates': 50, 'account_for_split_cost': True}
+  CV MSE: 4.1169 ± 0.3316
+
+🔍 Configuration 3: {'max_depth': 6, 'min_samples_split': 20, 'min_samples_leaf': 10, 'm_estimate': 3.0, 'min_mse_reduction': 0.015, 'significance_level': 0.15, 'max_threshold_candidates': 50, 'account_for_split_cost': True}
+  CV MSE: 4.2702 ± 0.3822
+
+======================================================================
+🎯 RETIS REGRESSION MODEL EVALUATION
+======================================================================
+
+📊 Training Set Performance:
+   MSE:           2.5349
+   RMSE:          1.5921
+   MAE:           1.2436
+   R²:            0.8848
+   Explained Var: 0.8848
+   MAPE:          261.2268
+   Rel. RMSE:     0.4075
+   Rel. MAE:      0.3183
+
+📈 Test Set Performance:
+   MSE:           5.0972
+   RMSE:          2.2577
+   MAE:           1.7701
+   R²:            0.7451
+   Explained Var: 0.7484
+   MAPE:          133.4228
+   Rel. RMSE:     0.5928
+   Rel. MAE:      0.4647
+
+⚠️  Overfitting Analysis:
+   R² difference (train - test): 0.1397
+   → Significant overfitting detected
+📊 Evaluation plots saved as 'retis_regression_evaluation.png'
+
+🔄 Performing 5-fold cross-validation...
+   MSE scores: [-4.16927487 -3.88865854 -4.74381657 -3.88603057 -3.89656754]
+.4f .4f
+
+🏁 Model Comparison:
+           Model  Test_MSE  Test_RMSE  Test_MAE  Test_R2  Test_MAPE
+           RETIS    5.0972     2.2577    1.7701   0.7451   133.4228
+  Mean Predictor   20.3205     4.5078    3.7679  -0.0163   274.8689
+Median Predictor   20.6405     4.5432    3.7873  -0.0323   322.9978
+
+🎯 FINAL RESULTS SUMMARY:
+   Best Configuration: {'max_depth': 5, 'min_samples_split': 25, 'min_samples_leaf': 12, 'm_estimate': 2.0, 'min_mse_reduction': 0.01, 'significance_level': 0.1, 'max_threshold_candidates': 50, 'account_for_split_cost': True}
+   Test R²: 0.7451
+   Test RMSE: 2.2577
+   CV Score: -4.1169 ± 0.3316
+   Tree Depth: 4
+   Number of Leaves: 10
+
+  CLASSIFICATION DEMO
+----------------------------------------
 ================================================================================
-WHAT'S DIFFERENT FROM SKLEARN VERSION
-================================================================================
-
-REMOVED:
-- sklearn.linear_model.LinearRegression
-- sklearn.base.BaseEstimator, RegressorMixin  
-- sklearn.preprocessing.StandardScaler
-- sklearn.model_selection (GridSearchCV, cross_val_score, KFold, train_test_split)
-- sklearn.metrics (all metrics)
-- sklearn.datasets (data generation)
-- sklearn.ensemble (RandomForestRegressor/Classifier)
-
-ADDED:
-- LinearRegressionCustom (uses np.linalg.lstsq for least-squares fitting)
-- StandardScalerCustom (uses numpy for mean/std calculation and scaling)
-- Custom BaseEstimator and RegressorMixin classes
-- Manual grid search implementation with 5-fold CV
-- All metrics implemented from mathematical definitions
-- Custom data generation functions
-
-RESULT: Complete rebuild using only numpy for computation
-
-================================================================================
-TESTING & VALIDATION
-================================================================================
-
-Test Suite Results (retis_test_custom.py):
-✓ Test 1: Basic RETIS Functionality - PASSED
-✓ Test 2: Regression Evaluation - PASSED  
-✓ Test 3: Classification Evaluation - PASSED
-✓ Test 4: Custom Metrics Implementation - PASSED
-✓ Test 5: Edge Cases - PASSED (3/3)
-✓ Test 6: Performance Benchmarks - PASSED
-
-Overall: 6/6 TESTS PASSING (100% Success Rate)
-
-Optimizer Demo (retis_optimizer.py):
-✓ Data preprocessing (custom scaling)
-✓ Manual optimization guide generation
-✓ Model evaluation
-✓ Configuration comparison
-✓ Cross-validation
-
-Status: ALL SYSTEMS OPERATIONAL
-
-================================================================================
-FILE STRUCTURE
-================================================================================
-
-retis.py                              [420+ lines]
-├─ LinearRegressionCustom            (custom least-squares)
-├─ BaseEstimator                     (custom base class)
-├─ RegressorMixin                    (custom mixin)
-├─ RETISNode                         (tree node structure)
-└─ RETIS                             (main implementation)
-
-custom_metrics.py                     [350+ lines]
-└─ CustomMetrics                     (19 metrics, all from scratch)
-
-retis_regression_custom.py            [330+ lines]
-├─ RETISRegressionEvaluatorCustom   (full evaluation pipeline)
-└─ Utility functions                 (synthetic data generation)
-
-retis_classification_custom.py        [280+ lines]
-├─ RETISClassifierCustom            (one-vs-rest classification)
-└─ RETISClassificationEvaluatorCustom (classification evaluation)
-
-retis_optimizer.py                    [390+ lines]
-├─ StandardScalerCustom             (custom scaling)
-└─ RETISOptimizer                   (hyperparameter optimization)
-
-retis_test_custom.py                  [320+ lines]
-└─ SimpleRETISTestSuite              (6 comprehensive tests)
-
-================================================================================
-DEPENDENCIES
+🔬 COMPREHENSIVE RETIS CLASSIFICATION EVALUATION
 ================================================================================
 
-REQUIRED:
-- numpy (for matrix operations, least-squares solving, array manipulation)
+🔍 Testing RETIS configurations for classification...
+   Config 1: {'max_depth': 4, 'min_samples_split': 30, 'min_samples_leaf': 15, 'm_estimate': 1.0, 'min_mse_reduction': 0.01, 'significance_level': 0.1, 'max_threshold_candidates': 50, 'account_for_split_cost': True} → Accuracy: 0.7583
+   Config 2: {'max_depth': 5, 'min_samples_split': 25, 'min_samples_leaf': 12, 'm_estimate': 2.0, 'min_mse_reduction': 0.01, 'significance_level': 0.1, 'max_threshold_candidates': 50, 'account_for_split_cost': True} → Accuracy: 0.7500
+   Config 3: {'max_depth': 6, 'min_samples_split': 20, 'min_samples_leaf': 10, 'm_estimate': 3.0, 'min_mse_reduction': 0.015, 'significance_level': 0.15, 'max_threshold_candidates': 50, 'account_for_split_cost': True} → Accuracy: 0.7417
 
-NOT REQUIRED:
-- scikit-learn (completely removed)
-- pandas (not needed for core implementation)
-- matplotlib/seaborn (optional for visualization only)
+🏆 Best configuration: {'max_depth': 4, 'min_samples_split': 30, 'min_samples_leaf': 15, 'm_estimate': 1.0, 'min_mse_reduction': 0.01, 'significance_level': 0.1, 'max_threshold_candidates': 50, 'account_for_split_cost': True} (Accuracy: 0.7583)
 
-Python Version: 3.13.9
+======================================================================
+🎯 RETIS CLASSIFICATION MODEL EVALUATION
+======================================================================
+
+📊 Training Set Performance:
+   Accuracy:      0.8812
+   Precision (macro): 0.8819
+   Precision (micro): 0.8812
+   Recall (macro):    0.8692
+   Recall (micro):    0.8812
+   F1 (macro):        0.8755
+   F1 (micro):        0.8812
+   AUC (macro):       0.9705
+   AUC (micro):       0.9705
+
+📈 Test Set Performance:
+   Accuracy:      0.7583
+   Precision (macro): 0.7491
+   Precision (micro): 0.7583
+   Recall (macro):    0.7380
+   Recall (micro):    0.7583
+   F1 (macro):        0.7435
+   F1 (micro):        0.7583
+   AUC (macro):       0.8685
+   AUC (micro):       0.8685
+
+⚠️  Overfitting Analysis:
+   Accuracy difference (train - test): 0.1229
+   → Significant overfitting detected
+📊 Evaluation plots saved as 'retis_classification_evaluation.png'
+
+🔄 Performing 5-fold cross-validation...
+   Accuracy scores: [0.72916667 0.73958333 0.70833333 0.6875     0.76041667]
+
+🏁 Model Comparison:
+        Model  Accuracy  Precision  Recall     F1    AUC
+        RETIS    0.7583     0.7491  0.7380 0.7435 0.8685
+       Random    0.3250     0.3283  0.3343 0.3313 0.0000
+Most Frequent    0.6417     0.2139  0.3333 0.2606 0.0000
+
+🎯 FINAL RESULTS SUMMARY:
+   Best Configuration: {'max_depth': 4, 'min_samples_split': 30, 'min_samples_leaf': 15, 'm_estimate': 1.0, 'min_mse_reduction': 0.01, 'significance_level': 0.1, 'max_threshold_candidates': 50, 'account_for_split_cost': True}
+   Test Accuracy: 0.7583
+   Test F1 (macro): 0.7435
+   CV Score: 0.7250 ± 0.0252
 
 ================================================================================
-PERFORMANCE CHARACTERISTICS
+ INTEGRATION DEMO COMPLETED!
 ================================================================================
+✅ RETIS regression and classification fully demonstrated
+✅ All components working together seamlessly
+✅ Ready for production use!
 
-Training Complexity: O(n * d * log(n)) where n=samples, d=features
-Prediction Complexity: O(tree_depth)
-
-Benchmark Results (from test suite):
-- n=100:   train=0.36s,  predict=0.0004s
-- n=300:   train=1.24s,  predict=0.003s
-- n=500:   train=1.76s,  predict=0.004s
-
-Linear scaling with dataset size
-
-================================================================================
-NEXT STEPS
-================================================================================
-
-To use this system:
-
-1. Import RETIS:
-   from retis import RETIS
-   model = RETIS(max_depth=5, min_samples_split=10)
-   model.fit(X_train, y_train)
-   predictions = model.predict(X_test)
-
-2. Use custom metrics:
-   from custom_metrics import CustomMetrics
-   mse = CustomMetrics.mse(y_true, y_pred)
-   r2 = CustomMetrics.r2_score(y_true, y_pred)
-
-3. Run optimization:
-   from retis_optimizer import RETISOptimizer
-   optimizer = RETISOptimizer(X_train, y_train, X_test, y_test)
-   recommendations = optimizer.manual_optimization_guide()
-
-4. Classification:
-   from retis_classification_custom import RETISClassifierCustom
-   clf = RETISClassifierCustom()
-   clf.fit(X_train, y_train)
-
-5. Run tests:
-   python retis_test_custom.py
-
-================================================================================
-PROJECT STATUS: COMPLETE & PRODUCTION-READY
-================================================================================
-
-All components implemented from scratch using numpy only.
-Full test coverage with 100% passing rate.
-Ready for use in production or research environments.
-
-Date: 2025-12-13
-Version: 2.0 (Complete From-Scratch Rebuild)
+ RETIS COMPREHENSIVE TESTING COMPLETE!
+All components have been thoroughly tested and demonstrated.
