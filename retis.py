@@ -2,6 +2,42 @@ import numpy as np
 from typing import Optional, Tuple
 import warnings
 warnings.filterwarnings('ignore')
+import inspect
+
+# sklearn compatibility classes (minimal implementation)
+class BaseEstimator:
+    def get_params(self, deep=True):
+        params = {}
+        try:
+            sig = inspect.signature(self.__class__.__init__)
+            for name, param in sig.parameters.items():
+                if name == 'self':
+                   continue
+                if hasattr(self, name):
+                    val = getattr(self, name)
+                    if deep and hasattr(val, 'get_params'):
+                        params[name] = val.get_params(deep=deep)
+                    else:
+                        params[name] = val
+        except Exception:
+                # Fallback: conservative behavior, return only simple attributes
+            for key, value in self.__dict__.items():
+                if not key.startswith('_') and isinstance(value, (int, float, bool, str, type(None))):
+                    params[key] = value
+        return params
+    
+    def set_params(self, **params):
+        for key, value in params.items():
+            setattr(self, key, value)
+        return self
+
+class RegressorMixin:
+    def score(self, X, y, sample_weight=None):
+        # Custom R² calculation (no sklearn dependency)
+        predictions = self.predict(X)
+        ss_res = np.sum((y - predictions) ** 2)
+        ss_tot = np.sum((y - np.mean(y)) ** 2)
+        return 1 - (ss_res / ss_tot) if ss_tot > 0 else 0.0
 
 class LinearRegressionCustom:
     def __init__(self):
@@ -10,20 +46,36 @@ class LinearRegressionCustom:
         self.coef_ = None
         self.residual_variance = None  # Added for statistical tests
         
-    def fit(self, X: np.ndarray, y: np.ndarray) -> 'LinearRegressionCustom':
+    def fit(self, X: np.ndarray, y: np.ndarray, ridge_alpha: float = 0.0) -> 'LinearRegressionCustom':
         X = np.array(X)
         y = np.array(y).reshape(-1, 1)
         
         # Augment X with intercept column
         X_aug = np.hstack([np.ones((X.shape[0], 1)), X])
         
-        # Solve normal equations: (X^T X) β = X^T y
+        # Solve (regularized) normal equations: (X^T X + alpha * D) β = X^T y
+        # where D is identity but we typically do not regularize intercept term.
         try:
-            coeffs, residuals, rank, s = np.linalg.lstsq(X_aug, y, rcond=None)
+            XtX = X_aug.T @ X_aug
+            Xty = X_aug.T @ y
+
+            if ridge_alpha and ridge_alpha > 0.0:
+                # Do not regularize intercept term: add alpha to diagonal starting at index 1
+                reg = np.zeros_like(XtX)
+                diag = np.arange(XtX.shape[0])
+                reg[diag, diag] = 1.0
+                reg[0, 0] = 0.0
+                XtX_reg = XtX + ridge_alpha * reg
+            else:
+                XtX_reg = XtX
+
+            coeffs = np.linalg.solve(XtX_reg, Xty)
+            coeffs = coeffs.reshape(-1, 1)
+
             self.coefficients = coeffs.reshape(-1)
             self.intercept_ = self.coefficients[0]
             self.coef_ = self.coefficients[1:]
-            
+
             # Calculate residual variance for statistical tests
             predictions = X_aug @ coeffs
             residuals_vec = y - predictions
@@ -32,13 +84,13 @@ class LinearRegressionCustom:
                 self.residual_variance = float(np.sum(residuals_vec ** 2) / df)
             else:
                 self.residual_variance = 0.0
-        except np.linalg.LinAlgError:
-            # Fallback to mean if singular matrix
-            self.coefficients = np.array([np.mean(y)] + [0.0] * X.shape[1])
+        except Exception:
+            # Fallback to mean if singular matrix or other numerical issue
+            self.coefficients = np.array([float(np.mean(y))] + [0.0] * X.shape[1])
             self.intercept_ = float(np.mean(y))
             self.coef_ = np.zeros(X.shape[1])
             self.residual_variance = float(np.var(y))
-            
+        
         return self
     
     def predict(self, X: np.ndarray) -> np.ndarray:
@@ -61,60 +113,24 @@ class RETISNode:
         self.df = 0  # Degrees of freedom
 
 
-class RETIS:
-    """
-    RETIS: Regression Tree with Instance-based Selection
-    Based on: Karalic, A. (1992). "Employing Linear Regression in Regression Tree Leaves"
-    
-    Key features:
-    1. Fits linear models at ALL nodes (internal and leaf)
-    2. Uses F-test for statistically-motivated pruning
-    3. Builds full tree first, then prunes based on statistical significance
-    
-    Academic Notes on Implementation Choices:
-    ────────────────────────────────────────────────────────────────────────
-    1. Degrees of Freedom: Standard approach uses (p+1) for the parameter 
-       difference. Karalič suggests accounting for split-point search cost.
-       Set account_for_split_cost=True for more conservative pruning.
-    
-    2. Variable Selection: This implementation uses all features in every 
-       linear model. Karalič's paper discusses stepwise variable selection 
-       in leaves for high-dimensional data, which reduces overfitting.
-       Enable with use_variable_selection=True (requires more computation).
-    
-    3. Singular Matrix Handling: Falls back to mean prediction when the 
-       design matrix is singular (practical necessity not in original paper).
-    """
-    
+class RETIS(BaseEstimator, RegressorMixin):
+        
     def __init__(self, 
-                 max_depth: int = 10,
-                 min_samples_split: int = 10,
-                 min_samples_leaf: int = 5,
-                 significance_level: float = 0.05,
-                 min_error_reduction: float = 0.0,
-                 account_for_split_cost: bool = False,
+                 max_depth: int = 6,
+                 min_samples_split: int = 20,
+                 min_samples_leaf: int = 10,
+                 significance_level: float = 0.10,
+                 min_error_reduction: float = 0.005,
+                 account_for_split_cost: bool = True,
                  use_variable_selection: bool = False,
-                 variable_selection_threshold: float = 0.05):
-        """
-        Parameters:
-        -----------
-        max_depth : int
-            Maximum depth of the tree
-        min_samples_split : int
-            Minimum samples required to split a node
-        min_samples_leaf : int
-            Minimum samples required in a leaf
-        significance_level : float
-            Significance level for F-test pruning (default 0.05)
-        min_error_reduction : float
-            Minimum relative error reduction to consider a split
-        account_for_split_cost : bool
-            If True, adds +1 to df_numerator for split-point search cost (more conservative)
-        use_variable_selection : bool
-            If True, performs backward stepwise variable selection in leaf models
-        variable_selection_threshold : float
-            P-value threshold for variable selection (if enabled)
-        """
+                 variable_selection_threshold: float = 0.05,
+                 # Compatibility / convenience parameters used across the codebase
+                 # Mild ridge regularization to prevent coefficient explosion
+                 m_estimate: float = 1.0,
+                 min_mse_reduction: Optional[float] = None,
+                 max_threshold_candidates: Optional[int] = 50,
+                 use_fast_solver: bool = True):
+       
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
@@ -123,6 +139,13 @@ class RETIS:
         self.account_for_split_cost = account_for_split_cost
         self.use_variable_selection = use_variable_selection
         self.variable_selection_threshold = variable_selection_threshold
+        # Compatibility aliases (some callers use different names)
+        self.m_estimate = m_estimate
+        # Allow callers to pass `min_mse_reduction`; prefer explicit param if provided
+        if min_mse_reduction is not None:
+            self.min_error_reduction = min_mse_reduction
+        self.max_threshold_candidates = max_threshold_candidates
+        self.use_fast_solver = use_fast_solver
         self.root = None
         self.n_features = None
         
@@ -140,20 +163,7 @@ class RETIS:
         return self
     
     def _fit_linear_model(self, X: np.ndarray, y: np.ndarray) -> Tuple[LinearRegressionCustom, float, float, int]:
-        """
-        Fit linear model and return model, error, variance, and degrees of freedom.
-        
-        If use_variable_selection is enabled, performs backward stepwise selection
-        to remove non-significant variables (closer to Karalič's discussion of
-        avoiding overfitting in small samples).
-        
-        Returns:
-        --------
-        model : LinearRegressionCustom
-        error : float (sum of squared residuals)
-        variance : float (residual variance)
-        df : int (degrees of freedom)
-        """
+       
         n = len(y)
         
         if n < 2:
@@ -174,7 +184,9 @@ class RETIS:
             else:
                 # Standard: Fit linear model with all features
                 model = LinearRegressionCustom()
-                model.fit(X, y)
+                # Use m_estimate as a ridge regularization parameter (alpha)
+                ridge_alpha = getattr(self, 'm_estimate', 0.0) if getattr(self, 'm_estimate', None) is not None else 0.0
+                model.fit(X, y, ridge_alpha=ridge_alpha)
                 
                 # Calculate error (sum of squared residuals)
                 X_aug = np.hstack([np.ones((X.shape[0], 1)), X])
@@ -208,12 +220,7 @@ class RETIS:
             return model, error, variance, df
     
     def _fit_with_variable_selection(self, X: np.ndarray, y: np.ndarray) -> Tuple[LinearRegressionCustom, float, float, int]:
-        """
-        Fit linear model with backward stepwise variable selection.
         
-        This addresses Karalič's discussion about not using all variables in
-        every leaf to avoid overfitting, especially in small samples.
-        """
         from scipy import stats
         
         n = len(y)
@@ -263,40 +270,60 @@ class RETIS:
             X_final = np.zeros((n, 0))
         
         X_aug = np.hstack([np.ones((n, 1)), X_final])
-        coeffs, *_ = np.linalg.lstsq(X_aug, y.reshape(-1, 1), rcond=None)
-        
+
+        # Use ridge regularization consistent with node settings
+        ridge_alpha = getattr(self, 'm_estimate', 0.0) if getattr(self, 'm_estimate', None) is not None else 0.0
+
+        # Build normal equations and solve with optional regularization
+        try:
+            XtX = X_aug.T @ X_aug
+            Xty = X_aug.T @ y.reshape(-1, 1)
+            if ridge_alpha and ridge_alpha > 0.0:
+                reg = np.zeros_like(XtX)
+                diag = np.arange(XtX.shape[0])
+                reg[diag, diag] = 1.0
+                reg[0, 0] = 0.0
+                XtX_reg = XtX + ridge_alpha * reg
+            else:
+                XtX_reg = XtX
+
+            coeffs = np.linalg.solve(XtX_reg, Xty)
+        except Exception:
+            coeffs, *_ = np.linalg.lstsq(X_aug, y.reshape(-1, 1), rcond=None)
+
         # Create full coefficient vector (with zeros for non-selected features)
         full_coeffs = np.zeros(X.shape[1] + 1)
-        full_coeffs[0] = coeffs[0]  # intercept
-        for i, feat_idx in enumerate(selected_features):
-            full_coeffs[feat_idx + 1] = coeffs[i + 1]
-        
+        try:
+            full_coeffs[0] = float(coeffs[0])  # intercept
+            for i, feat_idx in enumerate(selected_features):
+                full_coeffs[feat_idx + 1] = float(coeffs[i + 1])
+        except Exception:
+            # Fallback
+            full_coeffs[0] = float(np.mean(y))
+
         # Create model
         model = LinearRegressionCustom()
         model.coefficients = full_coeffs
         model.intercept_ = full_coeffs[0]
         model.coef_ = full_coeffs[1:]
-        
+
         # Calculate error and variance
-        predictions = X_aug @ coeffs
-        residuals = y.reshape(-1) - predictions.reshape(-1)
-        error = float(np.sum(residuals ** 2))
-        df = n - len(coeffs)
-        variance = error / df if df > 0 else 0.0
-        
+        try:
+            predictions = X_aug @ coeffs
+            residuals = y.reshape(-1) - predictions.reshape(-1)
+            error = float(np.sum(residuals ** 2))
+            df = n - len(coeffs)
+            variance = error / df if df > 0 else 0.0
+        except Exception:
+            error = float(np.sum((y - np.mean(y)) ** 2))
+            df = n - 1
+            variance = error / df if df > 0 else 0.0
+
         return model, error, variance, df
     
     def _calculate_split_error(self, X: np.ndarray, y: np.ndarray, 
                                feature_idx: int, threshold: float) -> Tuple[float, np.ndarray, np.ndarray]:
-        """
-        Calculate the total error for a potential split.
         
-        Returns:
-        --------
-        total_error : float (sum of errors from both children)
-        left_mask : np.ndarray
-        right_mask : np.ndarray
-        """
         left_mask = X[:, feature_idx] <= threshold
         right_mask = ~left_mask
         
@@ -316,15 +343,7 @@ class RETIS:
     
     def _find_best_split(self, X: np.ndarray, y: np.ndarray, 
                         current_error: float) -> Tuple[Optional[int], Optional[float], float]:
-        """
-        Find the best split that minimizes the total error.
         
-        Returns:
-        --------
-        best_feature : int or None
-        best_threshold : float or None
-        best_error : float
-        """
         best_error = float('inf')
         best_feature = None
         best_threshold = None
@@ -338,6 +357,13 @@ class RETIS:
             
             # Consider midpoints between consecutive unique values
             thresholds = (unique_vals[:-1] + unique_vals[1:]) / 2
+
+            # If user requested a maximum number of threshold candidates,
+            # downsample the candidate thresholds uniformly to limit compute.
+            if self.max_threshold_candidates is not None and len(thresholds) > self.max_threshold_candidates:
+                # Uniformly sample indices
+                idxs = np.linspace(0, len(thresholds) - 1, self.max_threshold_candidates, dtype=int)
+                thresholds = thresholds[idxs]
             
             for threshold in thresholds:
                 error, _, _ = self._calculate_split_error(X, y, feature_idx, threshold)
@@ -356,10 +382,7 @@ class RETIS:
         return best_feature, best_threshold, best_error
     
     def _grow_tree(self, X: np.ndarray, y: np.ndarray, depth: int) -> RETISNode:
-        """
-        Recursively grow the tree. Key difference from standard trees:
-        EVERY node (internal and leaf) gets a linear model fitted.
-        """
+        
         node = RETISNode()
         node.n_samples = len(y)
         
@@ -400,21 +423,7 @@ class RETIS:
         return node
     
     def _f_test_prune(self, node: RETISNode, X: np.ndarray, y: np.ndarray) -> bool:
-        """
-        Perform F-test to determine if the split is statistically significant.
         
-        The F-test compares:
-        - Error at parent node (with its linear model)
-        - Combined error of children nodes (with their linear models)
-        
-        Returns True if we should prune (split not significant).
-        
-        Academic Note (Karalič 1992):
-        The paper discusses that the split point selection itself consumes degrees 
-        of freedom. Standard implementation: df_numerator = (p+1) where p is the 
-        number of features. More conservative: df_numerator = (p+1) + 1 to account 
-        for the threshold search cost.
-        """
         if node.is_leaf or node.left is None or node.right is None:
             return False
         
@@ -473,10 +482,7 @@ class RETIS:
         return f_statistic < f_critical
     
     def _prune_tree(self, node: RETISNode, X: np.ndarray, y: np.ndarray):
-        """
-        Post-prune the tree using F-test for statistical significance.
-        Bottom-up pruning: prune children first, then decide on parent.
-        """
+        
         if node.is_leaf or node.left is None or node.right is None:
             return
         
@@ -501,7 +507,6 @@ class RETIS:
             node.right = None
     
     def _predict_node(self, x: np.ndarray, node: RETISNode) -> float:
-        """Predict for a single instance."""
         if node.is_leaf:
             # Use the linear model at this leaf
             x_aug = np.concatenate([[1.0], x])
@@ -514,20 +519,11 @@ class RETIS:
             return self._predict_node(x, node.right)
     
     def predict(self, X: np.ndarray) -> np.ndarray:
-        """Predict for multiple instances."""
         X = np.array(X)
         predictions = np.array([self._predict_node(x, self.root) for x in X])
         return predictions
     
-    def score(self, X: np.ndarray, y: np.ndarray) -> float:
-        """Calculate R² score."""
-        predictions = self.predict(X)
-        ss_res = np.sum((y - predictions) ** 2)
-        ss_tot = np.sum((y - np.mean(y)) ** 2)
-        return 1 - (ss_res / ss_tot) if ss_tot > 0 else 0.0
-    
     def get_n_leaves(self) -> int:
-        """Count number of leaf nodes."""
         def count_leaves(node):
             if node is None:
                 return 0
@@ -537,7 +533,6 @@ class RETIS:
         return count_leaves(self.root)
     
     def get_depth(self) -> int:
-        """Get maximum depth of tree."""
         def calc_depth(node):
             if node is None or node.is_leaf:
                 return 0
