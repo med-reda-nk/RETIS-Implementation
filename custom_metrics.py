@@ -1,6 +1,31 @@
 import numpy as np
 from typing import Dict, Tuple, Union
-from sklearn.model_selection import KFold
+
+
+# Simple local KFold implementation (no sklearn dependency)
+class KFold:
+    def __init__(self, n_splits=5, shuffle=False, random_state=None):
+        self.n_splits = n_splits
+        self.shuffle = shuffle
+        self.random_state = random_state
+
+    def split(self, X):
+        n_samples = len(X)
+        indices = np.arange(n_samples)
+        if self.shuffle:
+            rng = np.random.RandomState(self.random_state)
+            rng.shuffle(indices)
+
+        fold_sizes = (n_samples // self.n_splits) * np.ones(self.n_splits, dtype=int)
+        fold_sizes[: n_samples % self.n_splits] += 1
+
+        current = 0
+        for fold_size in fold_sizes:
+            start, stop = current, current + fold_size
+            test_idx = indices[start:stop]
+            train_idx = np.concatenate([indices[:start], indices[stop:]])
+            yield train_idx, test_idx
+            current = stop
 
 
 class CustomMetrics:
@@ -150,11 +175,19 @@ class CustomMetrics:
         return cm
 
     @staticmethod
-    def classification_report(y_true: np.ndarray, y_pred: np.ndarray) -> Dict:
+    def classification_report(y_true: np.ndarray, y_pred: np.ndarray,
+                              target_names: list = None, output_dict: bool = False) -> Union[Dict, str]:
+        
         classes = np.unique(y_true)
         report = {}
 
-        for cls in classes:
+        # Map class values to display names if provided
+        if target_names is not None and len(target_names) == len(classes):
+            class_labels = [str(name) for name in target_names]
+        else:
+            class_labels = [str(cls) for cls in classes]
+
+        for i, cls in enumerate(classes):
             y_true_binary = (y_true == cls).astype(int)
             y_pred_binary = (y_pred == cls).astype(int)
 
@@ -166,16 +199,26 @@ class CustomMetrics:
             precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
             recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
             f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
-            support = np.sum(y_true_binary)
+            support = int(np.sum(y_true_binary))
 
-            report[str(cls)] = {
-                'precision': precision,
-                'recall': recall,
-                'f1-score': f1,
+            report[class_labels[i]] = {
+                'precision': float(precision),
+                'recall': float(recall),
+                'f1-score': float(f1),
                 'support': support
             }
 
-        return report
+        if output_dict:
+            return report
+
+        # Build a simple string output similar to sklearn's text report
+        lines = []
+        header = f"{'':<20}{'precision':>9}{'recall':>9}{'f1-score':>9}{'support':>9}"
+        lines.append(header)
+        for label in class_labels:
+            vals = report[label]
+            lines.append(f"{label:<20}{vals['precision']:9.4f}{vals['recall']:9.4f}{vals['f1-score']:9.4f}{vals['support']:9d}")
+        return "\n".join(lines)
 
     @staticmethod
     def roc_auc_binary(y_true: np.ndarray, y_proba: np.ndarray) -> float:
