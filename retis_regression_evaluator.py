@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import cross_val_score, learning_curve
+from custom_metrics import custom_cross_val_score
 import matplotlib.pyplot as plt
 import seaborn as sns
 from typing import Dict, List, Tuple, Optional, Union
@@ -174,8 +174,15 @@ class RETISRegressionEvaluator:
         print(f"\n🔄 Performing {cv}-fold cross-validation...")
 
         # Get CV scores
-        cv_scores = cross_val_score(model, self.X_train, self.y_train,
-                                   cv=cv, scoring=scoring, n_jobs=-1)
+        # Map sklearn-like scoring names to custom_cross_val_score
+        if scoring == 'neg_mean_squared_error':
+            cv_scores = custom_cross_val_score(model, self.X_train, self.y_train, cv=cv, scoring='mse')
+            # custom_cross_val_score returns negative MSE (to mirror sklearn), so convert to positive
+            cv_scores = -cv_scores
+        elif scoring == 'r2':
+            cv_scores = custom_cross_val_score(model, self.X_train, self.y_train, cv=cv, scoring='r2')
+        else:
+            cv_scores = custom_cross_val_score(model, self.X_train, self.y_train, cv=cv, scoring=scoring)
 
         if scoring == 'neg_mean_squared_error':
             # Convert negative MSE to positive
@@ -284,10 +291,38 @@ def run_comprehensive_evaluation(X_train: np.ndarray, y_train: np.ndarray,
     print("="*80)
 
     if model_configs is None:
+        # Balanced configs: moderate regularization with controlled tree growth
         model_configs = [
-            {'max_depth': 5, 'min_samples_split': 20, 'm_estimate': 2.0},
-            {'max_depth': 8, 'min_samples_split': 10, 'm_estimate': 1.5},
-            {'max_depth': 12, 'min_samples_split': 5, 'm_estimate': 1.0}
+            {
+                'max_depth': 4,
+                'min_samples_split': 30,
+                'min_samples_leaf': 15,
+                'm_estimate': 1.0,
+                'min_mse_reduction': 0.01,
+                'significance_level': 0.10,
+                'max_threshold_candidates': 50,
+                'account_for_split_cost': True,
+            },
+            {
+                'max_depth': 5,
+                'min_samples_split': 25,
+                'min_samples_leaf': 12,
+                'm_estimate': 2.0,
+                'min_mse_reduction': 0.01,
+                'significance_level': 0.10,
+                'max_threshold_candidates': 50,
+                'account_for_split_cost': True,
+            },
+            {
+                'max_depth': 6,
+                'min_samples_split': 20,
+                'min_samples_leaf': 10,
+                'm_estimate': 3.0,
+                'min_mse_reduction': 0.015,
+                'significance_level': 0.15,
+                'max_threshold_candidates': 50,
+                'account_for_split_cost': True,
+            },
         ]
 
     # Initialize optimizer
@@ -296,8 +331,8 @@ def run_comprehensive_evaluation(X_train: np.ndarray, y_train: np.ndarray,
     # Compare configurations
     config_results = optimizer.compare_configurations(model_configs, cv=5, run_baselines=True)
 
-    # Get best configuration
-    best_config = config_results[np.argmin([r['test_mse'] for r in config_results])]['config']
+    # Get best configuration by cross-validated MSE
+    best_config = config_results[int(np.argmin([r['mean_cv_mse'] for r in config_results]))]['config']
 
     # Train best model
     best_model = RETIS(**best_config)
@@ -332,16 +367,15 @@ def run_comprehensive_evaluation(X_train: np.ndarray, y_train: np.ndarray,
 
 # Example usage
 if __name__ == "__main__":
-    from sklearn.datasets import make_regression
-    from sklearn.model_selection import train_test_split
+    # Simple synthetic regression data
+    rng = np.random.RandomState(42)
+    X = rng.randn(1000, 10)
+    coef = rng.randn(10)
+    y = X.dot(coef) + rng.randn(1000) * 20
 
-    # Generate sample data
-    X, y = make_regression(n_samples=1000, n_features=10, n_informative=7,
-                          noise=20, random_state=42)
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
+    # Use custom train-test split
+    from custom_metrics import train_test_split_custom
+    X_train, X_test, y_train, y_test = train_test_split_custom(X, y, test_size=0.2, random_state=42)
 
     # Run comprehensive evaluation
     results = run_comprehensive_evaluation(X_train, y_train, X_test, y_test)
