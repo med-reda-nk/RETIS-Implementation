@@ -1,5 +1,5 @@
 # RETIS Project - Karalic 1992 Implementation with Anti-Overfitting
-# ================================================================
+# ===============================
 [Presentation](https://www.canva.com/design/DAG7sJbv9q0/VeGo8GmWHBytwUHZeiOXZA/edit?utm_content=DAG7sJbv9q0&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
 
 ## Project Summary
