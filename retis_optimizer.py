@@ -165,7 +165,7 @@ class RETISOptimizer:
         
         return recommendations
 
-    def compare_configurations(self, configs: List[Dict], cv: int = 5) -> List[Dict]:
+    def compare_configurations(self, configs: List[Dict], cv: int = 5, run_baselines: bool = False) -> List[Dict]:
 
         print("\n" + "=" * 60)
         print("CONFIGURATION COMPARISON")
@@ -174,23 +174,40 @@ class RETISOptimizer:
         X_train = self.X_train_scaled if self.X_train_scaled is not None else self.X_train
         results = []
 
+        baseline_mean_mse = None
+        if run_baselines:
+            # Simple baseline: predict the training mean for every sample
+            mean_target = np.mean(self.y_train)
+            baseline_preds = np.full_like(self.y_train, fill_value=mean_target, dtype=float)
+            baseline_mean_mse = np.mean((self.y_train - baseline_preds) ** 2)
+            print(f"[+] Baseline (mean) MSE on training data: {baseline_mean_mse:.4f}")
+
+        # Use shuffled KFold indices for more stable CV estimates
+        indices = np.arange(len(X_train))
+        rng = np.random.RandomState(42)
+        rng.shuffle(indices)
+
+        fold_sizes = (len(indices) // cv) * np.ones(cv, dtype=int)
+        fold_sizes[: len(indices) % cv] += 1
+        folds = []
+        cur = 0
+        for fs in fold_sizes:
+            folds.append(indices[cur:cur + fs])
+            cur += fs
+
         for i, config in enumerate(configs):
             print(f"\n🔍 Configuration {i + 1}: {config}")
             
             cv_scores = []
-            fold_size = len(X_train) // cv
             
             for fold in range(cv):
-                test_start = fold * fold_size
-                test_end = test_start + fold_size
-                
-                if fold == cv - 1:
-                    test_end = len(X_train)
-                
-                X_cv_test = X_train[test_start:test_end]
-                y_cv_test = self.y_train[test_start:test_end]
-                X_cv_train = np.vstack([X_train[:test_start], X_train[test_end:]])
-                y_cv_train = np.concatenate([self.y_train[:test_start], self.y_train[test_end:]])
+                test_idx = folds[fold]
+                train_idx = np.concatenate([folds[j] for j in range(cv) if j != fold])
+
+                X_cv_train = X_train[train_idx]
+                y_cv_train = self.y_train[train_idx]
+                X_cv_test = X_train[test_idx]
+                y_cv_test = self.y_train[test_idx]
                 
                 retis = RETIS(**config)
                 retis.fit(X_cv_train, y_cv_train)
@@ -207,6 +224,20 @@ class RETISOptimizer:
                 'std_cv_mse': std_cv,
                 'cv_scores': cv_scores
             })
+            if baseline_mean_mse is not None:
+                results[-1]['baseline_mean_mse'] = baseline_mean_mse
+            # Train on full training data and evaluate on provided test set
+            try:
+                final_model = RETIS(**config)
+                final_model.fit(X_train, self.y_train)
+                y_test_pred = final_model.predict(self.X_test if self.X_test_scaled is None else self.X_test_scaled)
+                test_mse = float(np.mean((self.y_test - y_test_pred) ** 2))
+            except Exception:
+                test_mse = float('inf')
+
+            results[-1]['test_mse'] = test_mse
+            if 'test_mse' in results[-1]:
+                results[-1]['test_rmse'] = float(np.sqrt(results[-1]['test_mse']))
             
             print(f"  CV MSE: {mean_cv:.4f} ± {std_cv:.4f}")
 
