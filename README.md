@@ -1,6 +1,6 @@
 # RETIS Project - Karalic 1992 Implementation with Anti-Overfitting
 # ================================================================
-[Presentation][https://www.canva.com/design/DAG7sJbv9q0/VeGo8GmWHBytwUHZeiOXZA/edit?utm_content=DAG7sJbv9q0&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton]
+[Presentation](https://www.canva.com/design/DAG7sJbv9q0/VeGo8GmWHBytwUHZeiOXZA/edit?utm_content=DAG7sJbv9q0&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
 
 ## Project Summary
 RETIS (Regression Tree with Instance-based Selection) is a **complete implementation** of the Karalic 1992 algorithm, built entirely from scratch using only NumPy. The project emphasizes **algorithmic fidelity** while incorporating modern regularization techniques to prevent overfitting.
