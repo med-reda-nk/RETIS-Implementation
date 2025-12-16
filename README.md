@@ -224,7 +224,3 @@ RETIS (Regression Tree with Instance-based Selection) is a **complete implementa
 4. **Classification Demo**: `retis_classification_evaluator.py` - Multi-class evaluation
 5. **Metrics**: `custom_metrics.py` - 19+ evaluation metrics
 6. **Optimization**: `retis_optimizer.py` - Hyperparameter search and tuning
-
-
--  **Shuffled CV**: Improved cross-validation with proper fold randomization
--  **Demo Config Update**: Both evaluators now use conservative defaults matching RETIS
