@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import label_binarize
-from sklearn.model_selection import cross_val_score
+from custom_metrics import CustomMetrics, custom_cross_val_score, train_test_split_custom
 import matplotlib.pyplot as plt
 import seaborn as sns
 from typing import Dict, List, Tuple, Optional, Union
@@ -113,17 +112,22 @@ class RETISClassificationEvaluator:
         # AUC metrics (if probabilities available)
         if y_proba is not None:
             try:
-                if len(np.unique(y_true)) == 2:
+                classes = np.unique(y_true)
+                if len(classes) == 2:
                     # Binary classification using CustomMetrics
                     metrics['auc'] = CustomMetrics.roc_auc_binary(y_true, y_proba[:, 1])
                 else:
-                    # Multi-class AUC (one-vs-rest) - using sklearn for now as CustomMetrics doesn't have multi-class AUC
-                    y_bin = label_binarize(y_true, classes=np.unique(y_true))
-                    if y_bin.shape[1] == 1:
-                        y_bin = np.column_stack([1 - y_bin.ravel(), y_bin.ravel()])
-                    from sklearn.metrics import roc_auc_score
-                    metrics['auc_macro'] = roc_auc_score(y_bin, y_proba, multi_class='ovr', average='macro')
-                    metrics['auc_micro'] = roc_auc_score(y_bin, y_proba, multi_class='ovr', average='micro')
+                    # Multi-class AUC via one-vs-rest average using CustomMetrics
+                    aucs = []
+                    for i, cls in enumerate(classes):
+                        y_true_bin = (y_true == cls).astype(int)
+                        y_proba_cls = y_proba[:, i]
+                        try:
+                            aucs.append(CustomMetrics.roc_auc_binary(y_true_bin, y_proba_cls))
+                        except Exception:
+                            aucs.append(float('nan'))
+                    metrics['auc_macro'] = float(np.nanmean(aucs)) if len(aucs) > 0 else float('nan')
+                    metrics['auc_micro'] = metrics['auc_macro']
             except Exception as e:
                 print(f"Warning: Could not calculate AUC: {e}")
 
@@ -209,10 +213,21 @@ class RETISClassificationEvaluator:
             else:
                 fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
+            # Normalize axes to 2D array so indexing like axes[0,0] works
+            try:
+                import numpy as _np
+                if not isinstance(axes, _np.ndarray):
+                    axes = _np.array([[axes]])
+                elif axes.ndim == 1:
+                    axes = axes.reshape(1, -1)
+            except Exception:
+                # If numpy isn't available for some reason, fall back to original axes
+                pass
+
             fig.suptitle('RETIS Classification Model Evaluation', fontsize=16)
 
             # Confusion Matrix
-            cm = confusion_matrix(self.y_test, y_test_pred)
+            cm = CustomMetrics.confusion_matrix(self.y_test, y_test_pred)
             sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
                        xticklabels=self.classes_, yticklabels=self.classes_, ax=axes[0, 0])
             axes[0, 0].set_xlabel('Predicted')
@@ -220,7 +235,7 @@ class RETISClassificationEvaluator:
             axes[0, 0].set_title('Confusion Matrix')
 
             # Classification Report
-            report = classification_report(self.y_test, y_test_pred,
+            report = CustomMetrics.classification_report(self.y_test, y_test_pred,
                                         target_names=[str(cls) for cls in self.classes_],
                                         output_dict=True)
             report_df = pd.DataFrame(report).transpose()
@@ -233,8 +248,8 @@ class RETISClassificationEvaluator:
 
             if self.is_binary_:
                 # ROC Curve
-                fpr, tpr, _ = roc_curve(self.y_test, y_test_proba[:, 1])
-                auc_score = roc_auc_score(self.y_test, y_test_proba[:, 1])
+                fpr, tpr, _ = CustomMetrics.roc_curve(self.y_test, y_test_proba[:, 1])
+                auc_score = CustomMetrics.roc_auc_score(self.y_test, y_test_proba[:, 1])
 
                 axes[1, 0].plot(fpr, tpr, color='darkorange', linewidth=2,
                                label=f'ROC curve (AUC = {auc_score:.4f})')
@@ -248,7 +263,7 @@ class RETISClassificationEvaluator:
                 axes[1, 0].grid(True, alpha=0.3)
 
                 # Precision-Recall Curve
-                precision, recall, _ = precision_recall_curve(self.y_test, y_test_proba[:, 1])
+                precision, recall, _ = CustomMetrics.precision_recall_curve(self.y_test, y_test_proba[:, 1])
 
                 axes[1, 1].plot(recall, precision, color='blue', linewidth=2)
                 axes[1, 1].set_xlabel('Recall')
@@ -274,7 +289,7 @@ class RETISClassificationEvaluator:
 
         print(f"\n🔄 Performing {cv}-fold cross-validation...")
 
-        # Create a wrapper for sklearn compatibility
+        # Create a minimal wrapper for cross-validation
         class RETISClassifierWrapper:
             def __init__(self, retis_classifier):
                 self.retis_classifier = retis_classifier
@@ -284,14 +299,24 @@ class RETISClassificationEvaluator:
 
             def predict(self, X):
                 return self.retis_classifier.predict(X)
-
-            def score(self, X, y):
-                y_pred = self.predict(X)
-                return accuracy_score(y, y_pred)
+            
+            def get_params(self, deep=True):
+                # Return constructor parameters so cloning in custom_cross_val_score
+                # can recreate a fresh wrapper with an unfitted RETISClassifier
+                params = {}
+                try:
+                    if self.retis_classifier is not None and hasattr(self.retis_classifier, 'get_params'):
+                        params['retis_classifier'] = RETISClassifier(**self.retis_classifier.get_params())
+                    else:
+                        params['retis_classifier'] = self.retis_classifier
+                except Exception:
+                    params = {'retis_classifier': self.retis_classifier}
+                return params
 
         wrapper = RETISClassifierWrapper(model)
-        cv_scores = cross_val_score(wrapper, self.X_train, self.y_train,
-                                   cv=cv, scoring='accuracy', n_jobs=-1)
+
+        # Use custom_cross_val_score for cross-validation
+        cv_scores = custom_cross_val_score(wrapper, self.X_train, self.y_train, cv=cv, scoring=scoring)
 
         cv_results = {
             'scores': cv_scores,
@@ -301,16 +326,19 @@ class RETISClassificationEvaluator:
         }
 
         print(f"   Accuracy scores: {cv_scores}")
-        print(".4f",
-              ".4f")
         return cv_results
 
     def compare_with_baselines(self) -> pd.DataFrame:
        
-        from sklearn.dummy import DummyClassifier
-        from sklearn.linear_model import LogisticRegression
-        from sklearn.ensemble import RandomForestClassifier
-
+        # Attempt to import sklearn baselines; fall back to simple custom baselines if unavailable
+        try:
+            from sklearn.dummy import DummyClassifier
+            from sklearn.linear_model import LogisticRegression
+            from sklearn.ensemble import RandomForestClassifier
+            _HAVE_SKLEARN_BASELINES = True
+        except Exception:
+            _HAVE_SKLEARN_BASELINES = False
+        
         # Get RETIS predictions
         retis_pred = self.model.predict(self.X_test)
         retis_proba = self.model.predict_proba(self.X_test)
@@ -328,32 +356,50 @@ class RETISClassificationEvaluator:
             'AUC': retis_metrics.get('auc', retis_metrics.get('auc_macro', 0))
         })
 
-        # Baseline classifiers
-        baselines = [
-            ('Random', DummyClassifier(strategy='uniform', random_state=42)),
-            ('Most Frequent', DummyClassifier(strategy='most_frequent', random_state=42)),
-            ('Logistic Regression', LogisticRegression(random_state=42, max_iter=1000)),
-            ('Random Forest', RandomForestClassifier(n_estimators=100, random_state=42))
-        ]
+        # Baseline classifiers: prefer sklearn if available, otherwise use simple custom baselines
+        if _HAVE_SKLEARN_BASELINES:
+            baselines = [
+                ('Random', DummyClassifier(strategy='uniform', random_state=42)),
+                ('Most Frequent', DummyClassifier(strategy='most_frequent', random_state=42)),
+                ('Logistic Regression', LogisticRegression(random_state=42, max_iter=1000)),
+                ('Random Forest', RandomForestClassifier(n_estimators=100, random_state=42))
+            ]
+            for name, clf in baselines:
+                clf.fit(self.X_train, self.y_train)
+                pred = clf.predict(self.X_test)
 
-        for name, clf in baselines:
-            clf.fit(self.X_train, self.y_train)
-            pred = clf.predict(self.X_test)
+                try:
+                    proba = clf.predict_proba(self.X_test)
+                except:
+                    proba = None
 
-            try:
-                proba = clf.predict_proba(self.X_test)
-            except:
-                proba = None
+                metrics = self.calculate_all_metrics(self.y_test, pred, proba)
+                results.append({
+                    'Model': name,
+                    'Accuracy': metrics.get('accuracy', 0),
+                    'Precision': metrics.get('precision_macro', 0),
+                    'Recall': metrics.get('recall_macro', 0),
+                    'F1': metrics.get('f1_macro', 0),
+                    'AUC': metrics.get('auc', metrics.get('auc_macro', 0))
+                })
+        else:
+            # Simple custom baselines
+            # Random predictor
+            rng = np.random.RandomState(42)
+            rand_pred = rng.randint(0, len(self.classes_), size=len(self.X_test))
+            metrics = self.calculate_all_metrics(self.y_test, rand_pred, None)
+            results.append({'Model': 'Random', 'Accuracy': metrics.get('accuracy', 0),
+                            'Precision': metrics.get('precision_macro', 0), 'Recall': metrics.get('recall_macro', 0),
+                            'F1': metrics.get('f1_macro', 0), 'AUC': metrics.get('auc', metrics.get('auc_macro', 0))})
 
-            metrics = self.calculate_all_metrics(self.y_test, pred, proba)
-            results.append({
-                'Model': name,
-                'Accuracy': metrics.get('accuracy', 0),
-                'Precision': metrics.get('precision_macro', 0),
-                'Recall': metrics.get('recall_macro', 0),
-                'F1': metrics.get('f1_macro', 0),
-                'AUC': metrics.get('auc', metrics.get('auc_macro', 0))
-            })
+            # Most frequent predictor
+            vals, counts = np.unique(self.y_train, return_counts=True)
+            most_freq = vals[np.argmax(counts)]
+            mf_pred = np.full(len(self.X_test), most_freq)
+            metrics = self.calculate_all_metrics(self.y_test, mf_pred, None)
+            results.append({'Model': 'Most Frequent', 'Accuracy': metrics.get('accuracy', 0),
+                            'Precision': metrics.get('precision_macro', 0), 'Recall': metrics.get('recall_macro', 0),
+                            'F1': metrics.get('f1_macro', 0), 'AUC': metrics.get('auc', metrics.get('auc_macro', 0))})
 
         df = pd.DataFrame(results)
         print("\n🏁 Model Comparison:")
@@ -371,10 +417,38 @@ def run_comprehensive_classification_evaluation(X_train: np.ndarray, y_train: np
     print("="*80)
 
     if model_configs is None:
+        # Balanced configs: moderate regularization with controlled tree growth
         model_configs = [
-            {'max_depth': 5, 'min_samples_split': 20, 'm_estimate': 2.0},
-            {'max_depth': 8, 'min_samples_split': 10, 'm_estimate': 1.5},
-            {'max_depth': 12, 'min_samples_split': 5, 'm_estimate': 1.0}
+            {
+                'max_depth': 4,
+                'min_samples_split': 30,
+                'min_samples_leaf': 15,
+                'm_estimate': 1.0,
+                'min_mse_reduction': 0.01,
+                'significance_level': 0.10,
+                'max_threshold_candidates': 50,
+                'account_for_split_cost': True,
+            },
+            {
+                'max_depth': 5,
+                'min_samples_split': 25,
+                'min_samples_leaf': 12,
+                'm_estimate': 2.0,
+                'min_mse_reduction': 0.01,
+                'significance_level': 0.10,
+                'max_threshold_candidates': 50,
+                'account_for_split_cost': True,
+            },
+            {
+                'max_depth': 6,
+                'min_samples_split': 20,
+                'min_samples_leaf': 10,
+                'm_estimate': 3.0,
+                'min_mse_reduction': 0.015,
+                'significance_level': 0.15,
+                'max_threshold_candidates': 50,
+                'account_for_split_cost': True,
+            },
         ]
 
     # Test different configurations
@@ -387,7 +461,7 @@ def run_comprehensive_classification_evaluation(X_train: np.ndarray, y_train: np
         model = RETISClassifier(**config)
         model.fit(X_train, y_train)
         pred = model.predict(X_test)
-        score = accuracy_score(y_test, pred)
+        score = CustomMetrics.accuracy_score(y_test, pred)
 
         print(f"   Config {i+1}: {config} → Accuracy: {score:.4f}")
 
@@ -427,16 +501,13 @@ def run_comprehensive_classification_evaluation(X_train: np.ndarray, y_train: np
 
 # Example usage
 if __name__ == "__main__":
-    from sklearn.datasets import make_classification
-    from sklearn.model_selection import train_test_split
+    # Simple synthetic multi-class data
+    rng = np.random.RandomState(42)
+    X = rng.randn(1000, 10)
+    scores = X[:, :3].dot(np.eye(3)) + rng.randn(1000, 3) * 0.5
+    y = np.argmax(scores, axis=1)
 
-    # Generate sample data
-    X, y = make_classification(n_samples=1000, n_features=10, n_informative=7,
-                              n_redundant=2, n_classes=3, random_state=42)
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
+    X_train, X_test, y_train, y_test = train_test_split_custom(X, y, test_size=0.2, random_state=42)
 
     # Run comprehensive evaluation
     results = run_comprehensive_classification_evaluation(X_train, y_train, X_test, y_test)
