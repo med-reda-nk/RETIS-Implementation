@@ -1,30 +1,30 @@
 ================================================================================
-🧪 COMPREHENSIVE RETIS TEST SUITE
+ COMPREHENSIVE RETIS TEST SUITE
 ================================================================================
 
-🔍 Test 1: Basic RETIS Functionality
+ Test 1: Basic RETIS Functionality
    ✅ Model training: PASSED
    ✅ Predictions: PASSED
    📊 MSE: 2.8370, Leaves: 5, Depth: 3
 
-🔍 Test 2: RETIS Optimizer
+ Test 2: RETIS Optimizer
 
 ============================================================
 CONFIGURATION COMPARISON
 ============================================================
 
-🔍 Configuration 1: {'max_depth': 5, 'min_samples_split': 20}
+ Configuration 1: {'max_depth': 5, 'min_samples_split': 20}
   CV MSE: 0.9572 ± 0.7363
 
-🔍 Configuration 2: {'max_depth': 8, 'min_samples_split': 10}
+ Configuration 2: {'max_depth': 8, 'min_samples_split': 10}
   CV MSE: 0.9572 ± 0.7363
    ✅ Configuration comparison: PASSED
    📊 Configurations tested: 2
 
-🔍 Test 3: Regression Evaluation
+ Test 3: Regression Evaluation
 
 ======================================================================
-🎯 RETIS REGRESSION MODEL EVALUATION
+ RETIS REGRESSION MODEL EVALUATION
 ======================================================================
 
 📊 Training Set Performance:
@@ -53,9 +53,9 @@ CONFIGURATION COMPARISON
 
 🔄 Performing 3-fold cross-validation...
    MSE scores: [-5.55536144 -5.56723962 -8.11528652]
-.4f .4f
 
-🏁 Model Comparison:
+
+ Model Comparison:
            Model  Test_MSE  Test_RMSE  Test_MAE  Test_R2  Test_MAPE
            RETIS    5.6985     2.3872    1.8539   0.7409   527.8498
   Mean Predictor   23.0240     4.7983    3.9077  -0.0470   526.6655
@@ -64,10 +64,10 @@ Median Predictor   24.2955     4.9290    3.9615  -0.1049   344.2060
    ✅ Cross-validation: PASSED
    ✅ Baseline comparison: PASSED
 
-🔍 Test 4: Classification Evaluation
+ Test 4: Classification Evaluation
 
 ======================================================================
-🎯 RETIS CLASSIFICATION MODEL EVALUATION
+ RETIS CLASSIFICATION MODEL EVALUATION
 ======================================================================
 
 📊 Training Set Performance:
@@ -99,7 +99,7 @@ Median Predictor   24.2955     4.9290    3.9615  -0.1049   344.2060
 🔄 Performing 3-fold cross-validation...
    Accuracy scores: [0.68376068 0.7008547  0.75862069]
 
-🏁 Model Comparison:
+ Model Comparison:
         Model  Accuracy  Precision  Recall     F1    AUC
         RETIS    0.7667     0.7043  0.6883 0.6962 0.8901
        Random    0.3733     0.3828  0.3870 0.3849 0.0000
@@ -108,40 +108,40 @@ Most Frequent    0.5600     0.1867  0.3333 0.2393 0.0000
    ✅ Cross-validation: PASSED
    ✅ Baseline comparison: PASSED
 
-🔍 Test 5: sklearn Compatibility
+ Test 5: sklearn Compatibility
    ✅ get_params/set_params: PASSED
    ✅ Simple grid search compatibility: PASSED
    📊 Best CV score: 0.9968
 
-🔍 Test 6: Performance Benchmarks
+ Test 6: Performance Benchmarks
    ✅ Performance benchmarks: PASSED
    📊 Performance scaling:
 
-🔍 Test 7: Edge Cases
+ Test 7: Edge Cases
    ✅ Single feature: PASSED
    ✅ Small dataset: PASSED
    ✅ Constant target: PASSED
    📊 Edge cases: 3/3 passed
 
 ================================================================================
-📊 TEST SUITE SUMMARY
+ TEST SUITE SUMMARY
 ================================================================================
 ✅ Basic Retis: PASSED
-.4f
+
       - n_leaves: 5
       - depth: 3
 ✅ Retis Optimizer: PASSED
       - n_configs_tested: 2
 ✅ Regression Evaluation: PASSED
-.4f
-.4f
+
+
       - n_baselines: 2
 ✅ Classification Evaluation: PASSED
-.4f
-.4f
+
+
       - n_baselines: 2
 ✅ Sklearn Compatibility: PASSED
-.4f
+
       - n_params_tested: 4
 ✅ Performance Benchmarks: PASSED
 ✅ Edge Cases: PASSED
@@ -149,7 +149,7 @@ Most Frequent    0.5600     0.1867  0.3333 0.2393 0.0000
       - total: 3
 
  Overall Score: 7/7 tests passed
-🏆 ALL TESTS PASSED! RETIS is fully functional.
+ ALL TESTS PASSED! RETIS is fully functional.
 ================================================================================
 
 ================================================================================
@@ -177,7 +177,7 @@ CONFIGURATION COMPARISON
   CV MSE: 4.2702 ± 0.3822
 
 ======================================================================
-🎯 RETIS REGRESSION MODEL EVALUATION
+ RETIS REGRESSION MODEL EVALUATION
 ======================================================================
 
 📊 Training Set Performance:
@@ -207,7 +207,7 @@ CONFIGURATION COMPARISON
 
 🔄 Performing 5-fold cross-validation...
    MSE scores: [-4.16927487 -3.88865854 -4.74381657 -3.88603057 -3.89656754]
-.4f .4f
+
 
 🏁 Model Comparison:
            Model  Test_MSE  Test_RMSE  Test_MAE  Test_R2  Test_MAPE
@@ -215,7 +215,7 @@ CONFIGURATION COMPARISON
   Mean Predictor   20.3205     4.5078    3.7679  -0.0163   274.8689
 Median Predictor   20.6405     4.5432    3.7873  -0.0323   322.9978
 
-🎯 FINAL RESULTS SUMMARY:
+ FINAL RESULTS SUMMARY:
    Best Configuration: {'max_depth': 5, 'min_samples_split': 25, 'min_samples_leaf': 12, 'm_estimate': 2.0, 'min_mse_reduction': 0.01, 'significance_level': 0.1, 'max_threshold_candidates': 50, 'account_for_split_cost': True}
    Test R²: 0.7451
    Test RMSE: 2.2577
@@ -226,7 +226,7 @@ Median Predictor   20.6405     4.5432    3.7873  -0.0323   322.9978
   CLASSIFICATION DEMO
 ----------------------------------------
 ================================================================================
-🔬 COMPREHENSIVE RETIS CLASSIFICATION EVALUATION
+ COMPREHENSIVE RETIS CLASSIFICATION EVALUATION
 ================================================================================
 
 🔍 Testing RETIS configurations for classification...
@@ -234,10 +234,10 @@ Median Predictor   20.6405     4.5432    3.7873  -0.0323   322.9978
    Config 2: {'max_depth': 5, 'min_samples_split': 25, 'min_samples_leaf': 12, 'm_estimate': 2.0, 'min_mse_reduction': 0.01, 'significance_level': 0.1, 'max_threshold_candidates': 50, 'account_for_split_cost': True} → Accuracy: 0.7500
    Config 3: {'max_depth': 6, 'min_samples_split': 20, 'min_samples_leaf': 10, 'm_estimate': 3.0, 'min_mse_reduction': 0.015, 'significance_level': 0.15, 'max_threshold_candidates': 50, 'account_for_split_cost': True} → Accuracy: 0.7417
 
-🏆 Best configuration: {'max_depth': 4, 'min_samples_split': 30, 'min_samples_leaf': 15, 'm_estimate': 1.0, 'min_mse_reduction': 0.01, 'significance_level': 0.1, 'max_threshold_candidates': 50, 'account_for_split_cost': True} (Accuracy: 0.7583)
+ Best configuration: {'max_depth': 4, 'min_samples_split': 30, 'min_samples_leaf': 15, 'm_estimate': 1.0, 'min_mse_reduction': 0.01, 'significance_level': 0.1, 'max_threshold_candidates': 50, 'account_for_split_cost': True} (Accuracy: 0.7583)
 
 ======================================================================
-🎯 RETIS CLASSIFICATION MODEL EVALUATION
+ RETIS CLASSIFICATION MODEL EVALUATION
 ======================================================================
 
 📊 Training Set Performance:
@@ -276,7 +276,7 @@ Median Predictor   20.6405     4.5432    3.7873  -0.0323   322.9978
        Random    0.3250     0.3283  0.3343 0.3313 0.0000
 Most Frequent    0.6417     0.2139  0.3333 0.2606 0.0000
 
-🎯 FINAL RESULTS SUMMARY:
+ FINAL RESULTS SUMMARY:
    Best Configuration: {'max_depth': 4, 'min_samples_split': 30, 'min_samples_leaf': 15, 'm_estimate': 1.0, 'min_mse_reduction': 0.01, 'significance_level': 0.1, 'max_threshold_candidates': 50, 'account_for_split_cost': True}
    Test Accuracy: 0.7583
    Test F1 (macro): 0.7435
@@ -291,3 +291,4 @@ Most Frequent    0.6417     0.2139  0.3333 0.2606 0.0000
 
  RETIS COMPREHENSIVE TESTING COMPLETE!
 All components have been thoroughly tested and demonstrated.
+
